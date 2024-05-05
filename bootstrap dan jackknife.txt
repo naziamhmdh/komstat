@@ -1,0 +1,117 @@
+
+#BOOTSTRAP REG
+x=rnorm(100,0,1)
+y=rchisq(100,1)
+data=cbind(x,y)
+bootkoef = function(data, m, R)
+{
+  x = data[,1]
+  y = data[,2]
+  n = length(x)
+  b1 = matrix(nrow=R, ncol=1)
+  b0 = matrix(R,1)
+  for (i in 1:R)
+  {
+    urut = c(1:n)
+    posisi = sample(urut,m,replace=T)
+    datax = x[posisi]
+    datay = y[posisi]
+    regresi = lm(datay~datax)
+    b0[i] = regresi$coefficients[1]
+    b1[i] = regresi$coefficients[2]
+  }
+  par(mfrow=c(1,2))
+  hist(b0)
+  hist(b1)
+  beta_boot0 = mean(b0)
+  beta_boot1 = mean(b1)
+  C_bawah0 = beta_boot0 - (1.96*sd(b0)/sqrt(R))
+  C_atas0 = beta_boot0 + (1.96*sd(b0)/sqrt(R))
+  C_bawah1 = beta_boot1 - (1.96*sd(b1)/sqrt(R))
+  C_atas1  = beta_boot1 + (1.96*sd(b1)/sqrt(R))
+  list(betaboot = beta_boot0, CI_bawah0=C_bawah0, CI_atas0=C_atas0, 
+       betaboot1 = beta_boot1, CI_bawah1=C_bawah1, CI_atas1=C_atas1)
+}
+bootkoef(data,100,100)
+
+#CORR BOOTSTRAP
+x=rnorm(100,0,1)
+y=rchisq(100,1)
+data=cbind(x,y)
+head(data)
+
+bootkor = function(data,m,R)
+{
+  n = nrow(data)
+  kor = matrix(nrow=1, ncol=R)
+  for (i in 1:R)
+  {
+    urut = c(1:n)
+    posisi = sample(urut,m,replace=T)
+    data_new=data[posisi,]
+    kor[,i] = cor(data_new[,1],data_new[,2])
+  }
+  kor
+  korelasi_boot = mean(kor)
+  korelasi=cor(data[,1],data[,2])
+  bias= korelasi_boot-korelasi
+  hist(kor)
+  list(korboot = korelasi_boot, korelasi=korelasi,bias=bias)
+  
+}
+
+bootkor(data,100,1000)
+bootkor(data,300,1000)
+bootkor(data,100,1000000)
+bootkor(data,300,1000000)
+
+
+#MEAN JACKNIFE
+jacknife=function(data)
+{
+  n=length(data)
+  j=n-1
+  ulang=matrix(nrow=j,ncol=n)
+  rata=matrix(nrow=1, ncol=n)
+  for (i in 1:n)
+  {
+    ulang[,i]=data[-i]
+    rata[,i]=mean(ulang[,i])
+  }
+  hist(rata)
+  meanJ=mean(rata)
+  bias=(n-1)*(meanJ-mean(data))
+  seJ=sd(rata)*((n-1)/sqrt(n))
+  list(mean=mean(data), meanJ=meanJ, bias=bias, seJ=seJ)
+}
+jacknife(data)
+
+#JACKNIFE COR
+x=rnorm(100,0,1)
+y=rchisq(100,1)
+data=cbind(x,y)
+head(data)
+
+jack_kor = function(data)
+{
+  n=nrow(data)
+  j=n-1
+  kor = matrix(nrow=1, ncol=n)
+  for (i in 1:n)
+  {
+    data_new=data[-i,]
+    kor[,i] = cor(data_new[,1],data_new[,2])
+  }
+  korelasi_boot = mean(kor)
+  korelasi=cor(data[,1],data[,2])
+  bias=(n-1)*(korelasi_boot-korelasi)
+  hist(kor)
+  list(korboot = korelasi_boot, korelasi=korelasi,bias=bias)
+}
+
+jack_kor(data)
+
+
+
+
+

@@ -1,0 +1,219 @@
+---
+title: "Midterm Test 1"
+author: "Nazia Mahmudah"
+date: "10/6/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# ANALISIS DATA "MAYO CLINIC PRIMARY BILIARY CIRRHOSIS"
+
+1. Menginstal data PBCSEQ dan mendeskripsikan data
+Data PBCSEQ merupakan kumpulan data yang berisi data laboratorium tindak lanjut untuk setiap pasien yang diteliti. Kumpulan data PBCSEQ ini terdiri dari 19 variabel yaitu :
+- id(nomor penelitian), 
+- futime, 
+- status(status pada titik akhir, 0/1/2 untuk disensor, transplantasi, mati),
+- treatment/perlakuan,
+- age
+- sex
+- day
+- Acites
+- Spato
+- Spider
+- Ebema
+- Bili
+- chol
+- Albumin
+- alk.chos
+- ast
+- platelet
+- protime
+- stage
+pengukuran awal parameter laboratorium. Kumpulan data ini berisi beberapa hasil laboratorium, dari 1945 pasien yang dipilih secara acak. 
+Pengamatan terakhir sebelum kematian atau transplantasi hati sering kali memiliki lebih banyak kovariat yang hilang daripada baris data lainnya. pihak klinis menetapkan kunjungan pada 6 bulan, 1 tahun, dan setiap tahun setelahnya. Oleh karena itu, nilai yang hilang (NA) berpotensi menjadi informasi yang penting.
+
+```{r}
+library(survival)
+data = pbcseq
+summary(data)
+head(data)
+ncol(data)
+```
+
+2. Melakukan pembersihan data dari NA(missing value) dengan cara melakukan data manipulasi dengan mengganti nilai NA dengan nilai mean tiap data
+```{r}
+library(dplyr)
+
+data[] <- lapply(data, function(x) { 
+  x[is.na(x)] <- mean(x, na.rm = TRUE)
+  x
+})
+head(data)
+```
+
+
+3. Mengukur kadar albumin dalam darah. 
+```{r}
+library(ggplot2)
+p<-ggplot(data, aes(x=trt, y=albumin, fill=trt)) +
+  geom_bar(stat="identity")+theme_minimal()
+p
+
+hist(data$albumin)
+
+```
+Maka terdapat sedikit perbedaan angka kadar albumin pada pasien yang mekaukan treatment dengan yang tidak.
+
+
+4. Ringkasan Albumin dengan melakukan analisis deskriptif dan melakukan uji hipotesis 2 populasi antara populasi 1 = kadar albumin tanpa treatment dengan populasi 2 = kadar albumin dengan 1 kali treatment
+
+```{r}
+alb = data.frame(data$trt, data$albumin)
+summary(alb)
+albumin0 = subset(alb$data.albumin,alb$data.trt==1)
+albumin1 = subset(alb$data.albumin,alb$data.trt==0)
+summary(albumin0)
+summary(albumin1)
+
+```
+Berdasarkan data analisis deskriptif tersebut diketahui bahwa pasien yang tidak melakukan treatment memiliki kadar albumin rata rata sebesar 3.396 sedikit lebih tinggi dengan kadar tertinggi sebesar 6.820 dibanding pasien yang melakukan treatment yakni sebesar 3.383 dengan kadar tertinggi 8.010.
+
+
+5. Uji Hipotesis
+Dilakukan Uji mean 2 populasi pada kadar albumin dengan trt(treatmeant dimana 0 merupakan tidak treatment dan 1 melakukan treatment) untuk mengetahui apakah mean antar 2 populasi tersebut sama atau berbeda. namun sebelum dilakukan pengujian dilakukan uji varians terlebih dahulu untuk mengetahui apakah data tersebut memiliki varians populasi yang sama atau tidak karena akan mempengaruhi statistik uji yang digunakan. 
+
+```{r}
+albumin0 = subset(alb$data.albumin,alb$data.trt==1)
+albumin1 = subset(alb$data.albumin,alb$data.trt==0)
+# Uji mean 2 pop
+var2pop = function (pop1, pop2, d0, alpha)
+{
+  s12 = var(pop1)
+  s22 = var(pop2)
+  n1=length(pop1)
+  n2=length(pop2)
+  v1=n1-1
+  v2=n2-1
+  fhit=s12/s22
+  ftab=c(qf(alpha/2, df1=v1, df2=v2),qf(1-alpha/2, df1=v1, df2=v2))
+  ftab
+  p=2*(1-pf(fhit, df1 = v1, df2 = v2))
+  LL=(s12/s22)/qf(1-alpha/2,df1=v1,df2=v2)
+  UL=(s12/s22)*qf(1-alpha/2,df1=v1,df2=v2)
+  
+  if(p<alpha) {
+    kep1 = "Tolak Ho, maka terdapat perbedaan varians antar dua populasi"
+  } else {
+    kep1 = "Gagal Tolak Ho, maka tidak terdapat perbedaan varians antar dua populasi"
+  }
+  if (fhit<qf(alpha/2, df1=v1,df2=v2) | fhit>qf(1-(alpha/2), df1=v1,df2=v2)) {
+    kep2 = "Tolak Ho, maka terdapat perbedaan varians antar dua populasi"
+  } else {
+    kep2 = "Gagal Tolak Ho, maka tidak terdapat perbedaan varians antar dua populasi"
+  }
+  cat("Uji Varians 2 Populasi", "\n")
+  cat("H1                  : Var 1/Var 2 = 1", "\n")
+  cat("H0                  : Var 1/Var 2 != 1", "\n")
+  cat("F Hitung            : ", fhit, "\n")
+  cat("F Tabel             : ", ftab, "\n")
+  cat("P Value             : ", p, "\n") 
+  cat((1-alpha)*100,"% CI             : (",LL,";",UL,")", "\n")
+  cat("Keputusan P Val     : ", kep1, "\n")
+  cat("Keputusan F hit     : ", kep2, "\n")
+  
+  
+  if (kep1 == "Tolak Ho, maka terdapat perbedaan varians antar dua populasi") 
+  { 
+  mean1 = mean(pop1)
+  mean2 = mean(pop2)
+  thit = ((mean1-mean2)-d0)/(sqrt((s12/n1)+(s22/n2)))
+  v=((s12/n1 + s22/n2)^2)/( (((s12/n1)^2)/(n1-1)) + (((s22/n2)^2)/(n2-1))  )
+  ttab=abs(qt(alpha/2, df3))
+  pval=2*(1-pt(abs(thit),v)) 
+  UL=(mean1-mean2)-(qt(alpha/2,v))*(sqrt((s12/n1)+(s22/n2)))
+  LL=(mean1-mean2)+(qt(alpha/2,v))*(sqrt((s12/n1)+(s22/n2)))
+  
+  if(pval<alpha) {
+    kepp1 = "Tolak Ho"
+  } else {
+    kepp1 = "Gagal Tolak Ho"
+  }
+  if (thit>abs(ttab)) {
+    kepp2 = "Tolak Ho"
+  } else {
+    kepp2 = "Gagal Tolak Ho"
+  }
+  
+  cat("\n","Uji Mean 2 Populasi Varians tidak diketahui Berbeda", "\n")
+  cat("H0                  : miu 1 - miu 2 = 0", "\n")
+  cat("Ha                  : miu 1 - miu 2 != 0", "\n")
+  cat("t Hitung            : ", thit, "\n")
+  cat("|t Tabel|           : ", ttab, "\n")
+  cat("P Value             : ", pval, "\n") 
+  cat((1-alpha)*100,"% CI             : (",LL,";",UL,")", "\n")
+  cat("Keputusan P Val     : ", kepp1, "\n")
+  cat("Keputusan t hit     : ", kepp2, "\n")
+  
+  
+  } else {
+    
+    mean1 = mean(pop1)
+    mean2 = mean(pop2)
+    
+    df3=n1+n2-2
+    sp2 = (((n1-1)*s12)+((n2-1)*s22))/df3
+    thit = ((mean1-mean2)-d0)/((sqrt(sp2))*(sqrt((1/n1) + (1/n2))))
+    ttab=abs(qt(alpha/2, df3))
+    pval=2*(1-pt(abs(thit),df3)) 
+    UL=(mean1-mean2)-((qt(alpha/2,df3))*(sqrt(sp2))*(sqrt((1/n1)+(1/n2))))
+    LL=(mean1-mean2)+((qt(alpha/2,df3))*(sqrt(sp2))*(sqrt((1/n1)+(1/n2))))
+    
+    if(p<alpha) {
+      kepp1 = "Tolak Ho"
+    } else {
+      kepp1 = "Gagal Tolak Ho"
+    }
+    if (thit>abs(ttab)) {
+      kepp2 = "Tolak Ho"
+    } else {
+      kepp2 = "Gagal Tolak Ho"
+    }
+    
+    cat("\n","Uji Mean 2 Populasi varian tidak diketahui dan sama", "\n")
+    cat("H0                  : miu 1 - miu 2 != 0", "\n")
+    cat("Ha                  : miu 1 - miu 2 = 0", "\n")
+    cat("t Hitung            : ", thit, "\n")
+    cat("|t Tabel|           : ", ttab, "\n")
+    cat("P Value             : ", pval, "\n") 
+    cat((1-alpha)*100,"% CI             : (",LL,";",UL,")", "\n")
+    cat("Keputusan P Val     : ", kepp1, "\n")
+    cat("Keputusan t hit     : ", kepp2, "\n")
+  }
+}
+#Menjalankan function===========================================================
+var2pop(albumin0, albumin1, 0, 0.05)
+#pembuktian
+t.test(albumin0,albumin1)
+
+```
+
+maka terdapat perbedaan rata rata mean pasien tanpa treatment dengan pasien yang melakukan treatment dengan menggunakan selang kepercayaan 95% diperoleh interval -0.05758811 hingga 0.03191892.
+
+
+6. Apakah hasil pengujian akan berbeda dengan pasien yang menjalani transplatasi hati?
+dilakukan pengujian mean 2 populasi pada kadar albumin dengan status(dimana 0 merupakan tidak transplantasi hati dan 1 melakukan transplantasi hati dan variabel 2 tidak diambil dan dilakukan analisis karena sudah dinyatakan meninggal dunia) untuk mengetahui apakah mean antar 2 populasi tersebut sama atau berbeda. namun sebelum dilakukan pengujian dilakukan uji varians terlebih dahulu untuk mengetahui apakah data tersebut memiliki varians populasi yang sama atau tidak karena akan mempengaruhi statistik uji yang digunakan. 
+
+```{r}
+transplantasi = data.frame(data$status,data$albumin)
+
+tdktrans = subset(transplantasi$data.albumin,transplantasi$data.status==0)
+trans = subset(transplantasi$data.albumin,transplantasi$data.status==1)
+var2pop(trans,tdktrans, 0, 0.05)
+#pembuktian
+t.test(trans,tdktrans)
+```
+Maka terdapat maka terdapat perbedaan rata rata kadar albumin pada pasien yang tidak menjalani transplantasi dengan pasien yang menjalani transplantasi hati dengan menggunakan selang kepercayaan 95% diperoleh interval -0.2273027 hingga -0.0818689.

@@ -1,0 +1,47 @@
+MACRO
+
+TKANAN X Y D0 ALPHA
+
+MCONSTANT D0 DBAR SD N MU0 ALPHA THIT V ALPHA1 TTAB P PVAL BB
+MCOLUMN X Y D
+
+LET N=COUNT(X)
+LET D=X-Y
+LET DBAR=MEAN(D)
+LET SD=STDEV(D)
+
+LET THIT=(DBAR-D0)/(SD/SQRT(N))
+LET V=N-1
+LET ALPHA1=1-ALPHA
+
+#NILAI TABEL
+INVCDF ALPHA1 TTAB;
+ T V.
+PRINT THIT TTAB
+IF THIT>TTAB
+NOTE Tolak H0, maka rata-rata selisih lebih besar D0
+ELSE
+NOTE Gagal Tolak H0, maka rata-rata selisih kurang dari/sama dengan D0
+ENDIF
+
+#P-VALUE
+CDF THIT P;
+T V.
+LET PVAL=1-P
+PRINT ALPHA PVAL
+IF PVAL<ALPHA
+NOTE Tolak H0, maka rata-rata selisih lebih besar D0
+ELSE
+NOTE Gagal Tolak H0, maka rata-rata selisih kurang dari/sama dengan D0
+ENDIF
+
+#CI
+LET BB=DBAR-(TTAB*SD/SQRT(N))
+PRINT D0 BB
+IF D0<BB
+NOTE Tolak H0, maka rata-rata selisih lebih besar D0
+ELSE
+NOTE Gagal Tolak H0, maka rata-rata selisih kurang dari/sama dengan D0
+ENDIF
+
+ENDMACRO

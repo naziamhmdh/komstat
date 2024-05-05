@@ -1,0 +1,67 @@
+MACRO 
+
+BOOTREG Y X
+
+MCONSTANT N I B LOW_B0 UP_B0 LOW_B1 UP_B1
+MCOLUMN Y X E YHAT EE YY BETA B0 B1 B0_BOOT B1_BOOT
+
+LET N=COUNT(Y)
+LET B=1000
+
+Regress;
+Response Y;
+Nodefault;
+Continuous X;
+Terms X;
+Constant;
+Unstandardized;
+Gpareto;
+Tmethod;
+Tanova;
+Tsummary;
+Tcoefficients;
+Tequation;
+TDiagnostics 0;
+Fits YHAT;
+Residuals E.
+
+NORMTEST E;
+KSTEST.
+
+DO I=1:B
+ SAMPLE N E EE;
+ REPLACEMENT.
+ LET YY=YHAT+EE
+ Regress;
+ Response YY;
+ Nodefault;
+ Continuous X;
+ Terms X;
+ Constant;
+ Unstandardized;
+ Gpareto;
+ Tmethod;
+ Tanova;
+ Tsummary;
+ Tcoefficients;
+ Tequation;
+ TDiagnostics 0;
+ Coefficients BETA.
+ LET B0(I)=BETA(1)
+ LET B1(I)=BETA(2) 
+ENDDO
+
+HISTO B0
+HISTO B1
+LET B0_BOOT=MEAN(B0)
+LET B1_BOOT=MEAN(B1)
+SORT B1 B1
+SORT B0 B0
+LET LOW_B0=B0(25)
+LET UP_B0=B0(975)
+LET LOW_B1=B1(25)
+LET UP_B1=B1(975)
+
+PRINT B0_BOOT LOW_B0 UP_B0 B1_BOOT LOW_B1 UP_B1
+
+ENDMACRO

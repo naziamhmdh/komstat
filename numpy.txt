@@ -1,0 +1,47 @@
+ 
+NumPy : Numerical Python
+Open source library in python that used
+mathematical, statistical operations, scienctific operation, engineering and data science programming.
+
+Operation using NumPy :
+pip install numpy ( install manually)
+
+Python Numpy Array :
+np.array()
+you can creat values numpy array
+
+
+import numpy as np
+print(np.__version__)
+
+*array is function
+
+a = [1,2,3,4,5]
+print(a)
+type(a)
+b=np.array(a)
+print(b)
+print(b+100)
+[1, 2, 3, 4, 5] {data values (a)}
+[1 2 3 4 5] {array values (b)}
+[101 102 103 104 105] (array values (b+100)
+
+ 
+atribute to us array function yaitu shape
+shape() #lenght data
+
+atribute belongs to array
+
+perbedaan dtype dengan type
+
+type() #function
+dtype adalah data type dari datanya
+b.dtype
+int32 = datanya integer #[1,2,3,4,5]
+float64 = datanya decimal #[1.1,2.3,3.5,4.5,5.6]
+ndmin #number of dimention
+
+(1, 10) #1 row 10 colomn
+
+
+

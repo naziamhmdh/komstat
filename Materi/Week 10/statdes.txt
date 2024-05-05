@@ -1,0 +1,38 @@
+MACRO
+
+STATDES X 
+
+MCOLUMN X 
+MCONSTANT N I J A MIN MAX B MED K1 K3
+LET N=COUNT(X)
+DO I=1:N
+DO J=1:N
+ IF J>I & X(I)>X(J)
+  LET A=X(I)
+  LET X(I)=X(J)
+  LET X(J)=A
+ ENDIF
+ENDDO
+ENDDO
+LET MIN=X(1)
+LET MAX=X(N)
+LET B=MOD(N,4)
+IF B=1
+ LET K1=(X((N+3)/4)+X(((N+3)/4)-1))/2
+ LET MED=X((N+1)/2)
+ LET K3=(X(((N+3)*3/4)-1)+X(((N+3)*3/4)-2))/2
+ELSEIF B=2
+ LET K1=X((N+2)/4)
+ LET MED=(X(N/2)+X((N/2)+1))/2
+ LET K3=X(((N+2)*3/4)-1)
+ELSEIF B=3
+ LET K1=X((N+1)/4)
+ LET MED=X((N+1)/2)
+ LET K3=X((N+1)*3/4)
+ELSE
+ LET K1=(X(N/4)+X((N/4)+1))/2
+ LET MED=(X(N/2)+X((N/2)+1))/2
+ LET K3=(X(N*3/4)+X((N*3/4)+1))/2
+ENDIF
+PRINT MIN K1 MED K3 MAX 
+ENDMACRO

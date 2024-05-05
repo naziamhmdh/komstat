@@ -1,0 +1,43 @@
+MACRO
+regjack x.1-x.p y
+
+MCONSTANT n I j k ybar m q j2 k1 k2 
+MCOLUMN x.1-x.p xj.1-xj.p y r r2 yj beta koefb b0 b1 b2 b00 b10 b20 beta0
+MMATRIX mxj mx mxt mxtx mixtx my mxty mb 
+
+let n=count(y)
+let m=n-1
+set r
+1(1:1/1)m
+end.
+set r2
+1(1:1/1)n
+end.
+let j2=0
+let q=p+1
+
+DO I=1:n
+   copy x.1-x.p mxj
+   copy mxj xj.1-xj.p
+   delete i xj.1-xj.p
+   let yj=y
+   delete 1 yj
+   copy r xj.1-xj.p mx
+   copy yj my
+   transpose mx mxt
+   multiply mxt mx mxtx
+   invers mxtx mixtx
+   multiply mxt my mxty
+   multiply mixtx mxty mb
+   copy mb beta
+   let b0(I)=beta(1)
+   let b1(I)=beta(2)
+   let b2(I)=beta(3)
+DO j=1:q
+   let koefb(j2+1)=beta(j)
+ENDDO
+let j2=count(koefb)
+ENDDO
+print beta koefb b0 b1 b2 
+
+ENDMACRO
