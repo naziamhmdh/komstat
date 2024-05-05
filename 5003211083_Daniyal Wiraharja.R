@@ -1,7 +1,4 @@
-#Daniyal Wiraharja Athaurrakhman
-#5003211083
-#ETS Komstat
-
+#ETS 2023
 ####Nomor 1####
 x1= rnorm(50,5,1)
 x2= rchisq(50,49)
